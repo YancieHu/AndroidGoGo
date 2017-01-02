@@ -1,5 +1,9 @@
 package com.shadowsocks.util;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 
 import android.content.ClipData;
@@ -23,15 +27,45 @@ public class ConvertUtil {
 		for (int i = 0; i < infoBeans.size(); i++) {
 			ShadowInfoBean infoBean = infoBeans.get(i);
 			if (infoBean != null) {
-				totalBuffer.append("\n" + "ss://");
-				buffer.append(infoBean.getMethod()).append(":")
-						.append(infoBean.getPassword()).append("@")
-						.append(infoBean.getServer()).append(":")
-						.append(infoBean.getServer_port());
-				totalBuffer.append(base64(buffer));
+				if(Ping(infoBean.getServer())){
+					totalBuffer.append("\n" + "ss://");
+					buffer.append(infoBean.getMethod()).append(":")
+							.append(infoBean.getPassword()).append("@")
+							.append(infoBean.getServer()).append(":")
+							.append(infoBean.getServer_port());
+					totalBuffer.append(base64(buffer));
+				}
 			}
 		}
 		return totalBuffer.toString();
+	}
+
+	public static boolean Ping(String str) {
+		boolean resault = false;
+		Process p;
+		try {
+			// ping -c 3 -w 100 中 ，-c 是指ping的次数 3是指ping 3次 ，-w 100
+			// 以秒为单位指定超时间隔，是指超时时间为100秒
+			p = Runtime.getRuntime().exec("ping -c 3 -w 5 " + str);
+			int status = p.waitFor();
+			InputStream input = p.getInputStream();
+			BufferedReader in = new BufferedReader(new InputStreamReader(input));
+			StringBuffer buffer = new StringBuffer();
+			String line = "";
+			while ((line = in.readLine()) != null) {
+				buffer.append(line);
+			}
+			if (status == 0) {
+				resault = true;
+			} else {
+				resault = false;
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		return resault;
 	}
 
 	public static String base64(StringBuffer buffer) {
